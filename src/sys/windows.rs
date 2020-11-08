@@ -1046,15 +1046,15 @@ fn ms2dur(raw: DWORD) -> Option<Duration> {
 }
 
 pub(crate) fn to_in_addr(addr: &Ipv4Addr) -> IN_ADDR {
-    let octets = addr.octets();
-    let res = u32::from_ne_bytes(octets);
-    let mut new_addr: in_addr_S_un = unsafe { mem::zeroed() };
-    unsafe { *(new_addr.S_addr_mut()) = res };
-    IN_ADDR { S_un: new_addr }
+    let mut s_un: in_addr_S_un = unsafe { mem::zeroed() };
+    // `S_un` is stored as BE on all machines, and the array is in BE order.
+    // So the native endian conversion method is used so that it's never swapped.
+    unsafe { *(s_un.S_addr_mut()) = u32::from_ne_bytes(addr.octets()) };
+    IN_ADDR { S_un: s_un }
 }
 
 pub(crate) fn from_in_addr(in_addr: IN_ADDR) -> Ipv4Addr {
-    Ipv4Addr::from(u32::from_be(unsafe { *in_addr.S_un.S_addr() }))
+    Ipv4Addr::from(unsafe { *in_addr.S_un.S_addr() }.to_ne_bytes())
 }
 
 pub(crate) fn to_in6_addr(addr: &Ipv6Addr) -> in6_addr {

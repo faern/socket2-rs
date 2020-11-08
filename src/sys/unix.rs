@@ -1244,6 +1244,8 @@ fn timeval2dur(raw: libc::timeval) -> Option<Duration> {
 }
 
 pub(crate) fn to_in_addr(addr: &Ipv4Addr) -> in_addr {
+    // `s_addr` is stored as BE on all machines, and the array is in BE order.
+    // So the native endian conversion method is used so that it's never swapped.
     in_addr {
         s_addr: u32::from_ne_bytes(addr.octets()),
     }
